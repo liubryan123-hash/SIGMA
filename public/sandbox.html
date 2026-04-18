@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>EDU-SAAS | Gobernanza Backend</title>
+  <style>
+    /* Diseño Arquitectónico Moderno Dark */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; flex-direction:column; align-items: center; padding: 25px; margin: 0;}
+    .box { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; width: 100%; box-sizing:border-box; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 2px solid transparent;}
+    input, button, textarea { width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px; border: none; box-sizing: border-box; outline: none; font-family:inherit; transition:0.2s;}
+    input, textarea { background: #0f172a; color: #38bdf8; border: 1px solid #334155; }
+    input:focus, textarea:focus { border-color: #38bdf8; box-shadow: 0 0 5px rgba(56,189,248,0.5); }
+    button { background: #10b981; color: white; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;}
+    button:active { filter: brightness(0.8); transform: translateY(2px); }
+    pre { background: #020617; padding: 15px; border-radius: 8px; overflow-x: auto; color: #a855f7; border-left: 4px solid #a855f7; white-space:pre-wrap;}
+    .hint { font-size:12px; color:#94a3b8; font-style: italic; margin-bottom:5px; display:block; line-height: 1.4;}
+    .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1000px; width: 100%; }
+    .title-area { text-align: center; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="title-area">
+      <h1 style="margin-bottom: 5px; color:#e2e8f0;">🏛️ Tablero de Laboratorio (Fases 1 a 4)</h1>
+      <p style="color:#94a3b8; margin-top:5px;">Consola visual protegida por tokens para inyección de datos a la Nube.</p>
+  </div>
+  
+  <div class="grid-container">
+      <!-- Columna Izquierda (Auth y Config) -->
+      <div>
+          <div class="box" style="border-color:#334155;">
+            <h3 style="color:#38bdf8; margin-top:0;">1. Sembrar Perfiles Base</h3>
+            <input type="text" id="reg-nombre" placeholder="Nombre Completo" value="Profesor Einstein">
+            <input type="email" id="reg-email" placeholder="Correo Oficial" value="profe@saas.com">
+            <input type="password" id="reg-pass" placeholder="Clave" value="123456">
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <select id="reg-rol" style="flex:1; padding:10px; background:#111; color:white; border:1px solid #333; border-radius:5px;">
+                   <option value="superadmin">👑 SuperAdmin</option>
+                   <option value="profesor" selected>👨‍🏫 Profesor IA</option>
+                   <option value="alumno">👨‍🎓 Alumno Básico</option>
+                </select>
+                <input type="text" id="reg-acad" placeholder="Academia (Ej: ACAD-CIENCIAS)" value="ACAD-CIENCIAS" style="flex:1; margin-top:0;">
+            </div>
+            <button onclick="crearAdmin()" style="background:#38bdf8; color:black; margin-top:15px;">Generar Identidad en Postgres</button>
+          </div>
+
+          <div class="box" style="border-color:#064e3b;">
+            <h3 style="color:#10b981; margin-top:0;">2. Autorizar Pasaporte (Login JWT)</h3>
+            <span class="hint">Recupera la Llave Maestra. Si no lo haces, TODAS las cajas de abajo te darán error de "Acceso Denegado".</span>
+            <input type="email" id="log-email" placeholder="Correo" value="ceo@saas.com">
+            <input type="password" id="log-pass" placeholder="Clave" value="123456">
+            <button onclick="login()">🔍 VALIDAR Y OBTENER TOKEN</button>
+          </div>
+
+          <div class="box" style="border-color:#ca8a04;">
+            <h3 style="color:#fde047; margin-top:0;">3. Forjar Academia (Fase 2)</h3>
+            <input type="text" id="admin-acad-id" placeholder="ID (Ej: ACAD-VILLA)" value="ACAD-CIENCIAS">
+            <input type="text" id="admin-acad-nombre" placeholder="Nombre (Ej: Academia Ciencias)" value="Academia Ciencias">
+            <input type="text" id="admin-acad-slug" placeholder="Alias URL Único" value="ciencias_alpha">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                <label style="font-size:12px;color:#cbd5e1; font-weight:bold;">Color Institucional:</label>
+                <input type="color" id="admin-acad-color" value="#eab308" style="width:100px; height:35px; padding:0; cursor:pointer; border:none; background:transparent;">
+            </div>
+            <button onclick="crearAcademia()" style="background:#eab308; color:black; margin-top: 12px;">🏢 Emitir Contrato de Sede</button>
+          </div>
+      </div>
+      
+      <!-- Columna Derecha (Core Educativo y Motor AI) -->
+      <div>
+          <div class="box" style="border-color:#be123c;">
+            <h3 style="color:#fb7185; margin-top:0;">4. Ciclos Académicos (Fase 3)</h3>
+            <span class="hint">Creamos el esquema Universitario ordenado.</span>
+            <input type="text" id="f3-ciclo-nombre" placeholder="Título Comercial" value="Semestral San Marcos">
+            <input type="text" id="f3-ciclo-desc" placeholder="Descripción" value="Ciclo Oficial 2026-I">
+            <button onclick="crearCiclo()" style="background:#f43f5e; color:white;">📚 Crear Módulo Educativo</button>
+          </div>
+
+          <div class="box" style="border-color:#6d28d9;">
+            <h3 style="color:#c084fc; margin-top:0;">5. 🤖 Motor Calificador IA (Fase 4)</h3>
+            <span class="hint">El avance tecnológico maestro. Node evaluará preguntas como lo haría el sistema real matemático de admisión.</span>
+            
+            <p style="margin-top:10px; margin-bottom:2px; font-weight:bold; font-size:12px; color:#c084fc;">Paso A) Crear Molde/Plantilla de Examen</p>
+            <span class="hint">Enseña al sistema que la P1=A, P2=B, P3=A, y si el Alumno falla pierde 1.125.</span>
+            <button onclick="crearPlantilla()" style="background:#8b5cf6; padding:8px;">A) GRABAR REGLAS OFICIALES EN BD</button>
+            <hr style="border:1px solid #334155; margin:15px 0;">
+            
+            <p style="margin-top:10px; margin-bottom:2px; font-weight:bold; font-size:12px; color:#c084fc;">Paso B) Simular Foto de Hoja Evaluada por IA</p>
+            <span class="hint">Edita esto. Simulemos que el alumno falló la 2 (marcó C, en lugar de B) y dejó vacía la 3 ("").</span>
+            <textarea id="f4-ia-json" rows="3" style="font-family:monospace; font-size:12px; margin-top:4px;">{ "1": "A", "2": "C", "3": "" }</textarea>
+            <button onclick="calificarExamen()" style="background:#d946ef; margin-top:5px; border:2px solid #a855f7;">B) CALCULAR Y APLICAR CASTIGOS (ENVIAR)</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Consola Gigante Inferior -->
+  <div class="box" style="width: 100%; max-width:1000px; margin-top:0;">
+    <h3 style="color:#38bdf8; margin-top:0; display:flex; justify-content:space-between; align-items:center;">
+        📦 Escáner de Resultados de Backend PostgreSQL
+        <span id="token-status" style="font-size:12px; color:#ef4444; background:#450a0a; border: 1px solid #7f1d1d; padding:4px 8px; border-radius:4px;">🔑 Token JWT: Ausente o Expirado</span>
+    </h3>
+    <pre id="resultado" style="min-height: 120px;">Terminal a la espera de peticiones...</pre>
+  </div>
+
+  <script>
+    // MEMORIA VOLATIL DEL NAVEGADOR
+    let tokenCargado = ''; 
+    let ultimoUsuarioID = 'TEST-12345'; // Para simular calificacion sobre él
+
+    // Motor comunicador Fetch
+    async function apiRequest(endpoint, bodyData, method = 'POST') {
+      try {
+          const headers = { 'Content-Type': 'application/json' };
+          if(tokenCargado) { headers['Authorization'] = 'Bearer ' + tokenCargado; }
+          const res = await fetch(endpoint, { method, headers, body: JSON.stringify(bodyData) });
+          const json = await res.json();
+          document.getElementById('resultado').innerText = JSON.stringify(json, null, 2);
+          return json;
+      } catch (e) {
+          document.getElementById('resultado').innerText = "ERROR FATAL: El Motor de Node.js no está corriendo o perdiste señal a Internet.";
+          return null;
+      }
+    }
+
+    // ===================================
+    // ACCIONES DE FASE 1, 2 Y 3
+    // ===================================
+    async function crearAdmin() {
+      const btn = event.target; btn.innerText = 'Cargando...';
+      await apiRequest('/api/auth/setup-admin', {
+         nombre: document.getElementById('reg-nombre').value, 
+         email: document.getElementById('reg-email').value, 
+         password: document.getElementById('reg-pass').value, 
+         codigo_academia: document.getElementById('reg-acad').value || 'SUPERADMIN',
+         rol: document.getElementById('reg-rol').value
+      });
+      btn.innerText = 'Generar Identidad en Postgres';
+    }
+
+    async function login() {
+      const btn = event.target; btn.innerText = 'Consultando Bóveda...';
+      const data = await apiRequest('/api/auth/login', { email: document.getElementById('log-email').value, password: document.getElementById('log-pass').value });
+      
+      if(data && data.token) {
+          tokenCargado = data.token;
+          ultimoUsuarioID = data.user_info.id;
+          const tstatus = document.getElementById('token-status');
+          tstatus.innerText = '🔑 Token Autorizado: VIAJANDO EN CABECERAS';
+          tstatus.style.color = '#10b981'; tstatus.style.background = '#064e3b'; tstatus.style.borderColor = '#047857';
+      }
+      btn.innerText = '🔍 VALIDAR Y OBTENER TOKEN';
+    }
+
+    async function crearAcademia() {
+      if(!tokenCargado) return document.getElementById('resultado').innerText = "BLOQUEO: Guardia JWT Interceptó la petición. (Haz login de Caja 2).";
+      const btn = event.target; btn.innerText = 'Viajando a Postgres...';
+      await apiRequest('/api/admin/academias', {
+        id_academia: document.getElementById('admin-acad-id').value, nombre: document.getElementById('admin-acad-nombre').value, slug: document.getElementById('admin-acad-slug').value, brand_primary_color: document.getElementById('admin-acad-color').value
+      });
+      btn.innerText = '🏢 Emitir Contrato de Sede';
+    }
+
+    async function crearCiclo() {
+      if(!tokenCargado) return document.getElementById('resultado').innerText = "BLOQUEO: Guardia JWT Activo.";
+      const btn = event.target; btn.innerText = 'Inyectando...';
+      await apiRequest('/api/academic/ciclos', {
+         id_academia: 'ACAD-PRUEBA',
+         nombre_ciclo: document.getElementById('f3-ciclo-nombre').value,
+         descripcion: document.getElementById('f3-ciclo-desc').value
+      });
+      btn.innerText = '📚 Crear Módulo Educativo';
+    }
+
+    // ===================================
+    // ACCIONES DE FASE 4: INTELIGENCIA ARTIFICIAL (EXAMS)
+    // ===================================
+    const CODIGO_PRUEBA_EXAMEN = "SM-SIM-DEMO-" + Math.floor(Math.random()*100); // Aleatorio anti-codigo replicado unico
+
+    async function crearPlantilla() {
+      if(!tokenCargado) return document.getElementById('resultado').innerText = "BLOQUEO: Guardia JWT Activo.";
+      const btn = event.target; btn.innerText = 'Guardando reglas...';
+      const payload = {
+         codigo_examen: CODIGO_PRUEBA_EXAMEN,
+         id_academia: "ACAD-PRUEBA",
+         nombre_simulacro: "Simulacro Experto San Marcos",
+         claves_correctas: { "1": "A", "2": "B", "3": "A" },
+         configuracion_cursos: {
+             "matematicas": { "rango": [1, 2], "puntos_correcta": 20, "puntos_incorrecta": -1.125, "blanco": 0 },
+             "letras":      { "rango": [3, 3], "puntos_correcta": 20, "puntos_incorrecta": -1.125, "blanco": 0 }
+         }
+      };
+      await apiRequest('/api/exams/plantilla', payload);
+      btn.innerText = 'A) GRABAR REGLAS OFICIALES EN BD';
+    }
+
+    async function calificarExamen() {
+      if(!tokenCargado) return document.getElementById('resultado').innerText = "BLOQUEO: Guardia JWT Activo.";
+      const btn = event.target; btn.innerText = '🧠 Calculando Puntos...';
+      
+      let rawIA;
+      try {
+        rawIA = JSON.parse(document.getElementById('f4-ia-json').value.trim());
+      } catch(e) { 
+        document.getElementById('resultado').innerText = "ERROR JSON: Las comillas no son válidas o falta una llave. Edite con cuidado su trampa fotográfica.";
+        btn.innerText = 'B) CALCULAR Y APLICAR CASTIGOS (ENVIAR)';
+        return; 
+      }
+
+      await apiRequest('/api/exams/calificar', {
+         codigo_examen: CODIGO_PRUEBA_EXAMEN,
+         id_alumno: ultimoUsuarioID,
+         respuestas_alumno: rawIA
+      });
+      btn.innerText = 'B) CALCULAR Y APLICAR CASTIGOS (ENVIAR)';
+    }
+
+  </script>
+</body>
+</html>

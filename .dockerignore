@@ -1,0 +1,8 @@
+node_modules
+.env
+.env.production
+npm-debug.log
+uploads
+docs
+*.log
+.git

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(node -e \"require\\(''sharp''\\); console.log\\(''sharp OK''\\)\")",
+      "Bash(find 'e:\\\\Antigravity proyectos\\\\plataforma-saas-academias\\\\frontend' -type f \\\\\\(-name .env* -o -name *.config.* -o -name package.json \\\\\\))",
+      "Bash(find 'e:\\\\Antigravity proyectos\\\\plataforma-saas-academias' -name *.md -path *backend* -o -name *.md -path *server*)",
+      "Bash(wc -l \"e:\\\\Antigravity proyectos\\\\plataforma-saas-academias/src/routes\"/*.js)",
+      "Bash(grep -l \"export default\" \"e:\\\\Antigravity proyectos\\\\plataforma-saas-academias/frontend/src/app/dashboard\"/*.jsx)"
+    ]
+  }
+}
