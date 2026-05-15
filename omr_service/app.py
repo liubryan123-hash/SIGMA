@@ -1,7 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse, Response
 import os
-import shutil
 import uuid
 import logging
 import traceback
@@ -16,6 +15,9 @@ app = FastAPI(title="SIGMA OMR Service", version="1.0.0")
 
 UPLOAD_DIR = "/tmp/omr_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tiff', '.tif'}
+MAX_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 
 @app.get("/health")
 def health_check():
@@ -36,16 +38,26 @@ async def process_exam(
     
     if not image.filename:
         raise HTTPException(status_code=400, detail="No se proporcionó ningún archivo de imagen.")
-    
+
+    ext = os.path.splitext(image.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Formato no permitido: '{ext}'. Use: jpg, jpeg, png, webp, bmp, tiff.",
+        )
+
+    content = await image.read()
+    if len(content) > MAX_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="Imagen demasiado grande (máximo 20 MB).")
+
     # Generar un nombre temporal único
-    file_extension = os.path.splitext(image.filename)[1]
-    tmp_filename = f"{uuid.uuid4()}{file_extension}"
+    tmp_filename = f"{uuid.uuid4()}{ext}"
     tmp_filepath = os.path.join(UPLOAD_DIR, tmp_filename)
-    
+
     try:
         # Guardar imagen en disco
-        with open(tmp_filepath, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
+        with open(tmp_filepath, "wb") as f:
+            f.write(content)
             
         logger.info(f"Imagen guardada en {tmp_filepath}")
         

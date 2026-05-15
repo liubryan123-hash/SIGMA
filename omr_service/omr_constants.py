@@ -13,7 +13,7 @@ PAGE_H = 210.0   # mm  (A4 landscape alto)
 
 # ── Marcadores de esquina (círculos rellenos negros) ──────────────────
 # El motor los usa para corregir perspectiva y escala.
-MARKER_R      = 6.0    # radio (mm)
+MARKER_R      = 9.0    # radio (mm)
 MARKER_MARGIN = 12.0   # distancia del centro al borde más cercano
 
 MARKER_TL = (MARKER_MARGIN,            MARKER_MARGIN)           # top-left

@@ -153,9 +153,13 @@ def _find_corner_markers(img_gray: np.ndarray):
         )
         return None
 
-    # Tomar los 4 contornos más grandes (probablemente son los marcadores)
-    candidates.sort(key=lambda x: x[2], reverse=True)
-    top4 = [(x, y) for x, y, _ in candidates[:4]]
+    # Selección por cuadrante: evita que blobs grandes en el área de respuestas
+    # desplacen a los marcadores reales de las esquinas.
+    top4 = _select_by_quadrant(candidates, w, h)
+    if top4 is None:
+        logger.warning("Selección por cuadrante falló, usando top-4 global.")
+        candidates.sort(key=lambda x: x[2], reverse=True)
+        top4 = [(x, y) for x, y, _ in candidates[:4]]
 
     return _assign_corners(top4)
 
@@ -194,6 +198,34 @@ def _detect_blobs(blurred, area_min, area_max, method: str):
         cy = int(M["m01"] / M["m00"])
         candidates.append((cx, cy, area))
     return candidates
+
+
+def _select_by_quadrant(candidates, img_w: int, img_h: int):
+    """
+    Selecciona el mejor candidato (mayor área) en cada uno de los 4 cuadrantes.
+    Retorna [(cx,cy), (cx,cy), (cx,cy), (cx,cy)] o None si falta algún cuadrante.
+    """
+    mid_x = img_w / 2
+    mid_y = img_h / 2
+
+    def best_in(want_left: bool, want_top: bool):
+        qcands = [
+            (x, y, a) for x, y, a in candidates
+            if (x < mid_x) == want_left and (y < mid_y) == want_top
+        ]
+        if not qcands:
+            return None
+        c = max(qcands, key=lambda t: t[2])
+        return (c[0], c[1])
+
+    tl = best_in(want_left=True,  want_top=True)
+    tr = best_in(want_left=False, want_top=True)
+    bl = best_in(want_left=True,  want_top=False)
+    br = best_in(want_left=False, want_top=False)
+
+    if None in (tl, tr, bl, br):
+        return None
+    return [tl, tr, bl, br]
 
 
 def _assign_corners(points):

@@ -716,6 +716,49 @@ router.get('/analisis/:codigo_examen', verificarRoles('superadmin', 'director', 
 });
 
 // ==========================================
+// TEMPLATE — descarga hoja OMR personalizada con el nombre de la academia
+// ==========================================
+router.get('/template', verificarRoles('superadmin', 'director', 'profesor'), async (req, res) => {
+  const id_academia = req.usuario.id_academia;
+  const n_questions = parseInt(req.query.n_questions) || 100;
+  const exam_title  = req.query.exam_title || 'HOJA DE RESPUESTAS';
+
+  if (n_questions < 1 || n_questions > 100) {
+    return res.status(400).json({ error: 'n_questions debe estar entre 1 y 100.' });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      'SELECT nombre_academia FROM academias WHERE id_academia = $1',
+      [id_academia]
+    );
+    const academy_name = rows[0]?.nombre_academia || 'ACADEMIA';
+
+    const OMR_BASE = (process.env.OMR_SERVICE_URL || 'http://omr_service:5000/api/omr/process')
+      .replace(/\/api\/omr\/process$/, '');
+
+    const params = new URLSearchParams({ academy_name, exam_title, n_questions: String(n_questions) });
+    const resp = await fetch(`${OMR_BASE}/api/omr/template?${params}`);
+
+    if (!resp.ok) {
+      return res.status(502).json({ error: 'Error generando plantilla en el servicio OMR.' });
+    }
+
+    const buffer = await resp.arrayBuffer();
+    const safe = academy_name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="ficha_omr_${safe}.pdf"`,
+      'Content-Length': buffer.byteLength,
+    });
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('Error proxy template OMR:', err);
+    res.status(500).json({ error: 'No se pudo conectar al servicio OMR: ' + err.message });
+  }
+});
+
+// ==========================================
 // USO OMR — cuántos escaneos lleva la academia este mes
 // ==========================================
 router.get('/uso-mensual', verificarRoles('superadmin', 'director', 'profesor'), async (req, res) => {

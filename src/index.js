@@ -12,6 +12,7 @@ const config = require('./config');
 config.validate();
 
 const app = express();
+app.set('trust proxy', 1);
 const port = config.server.port;
 const publicApiUrl = config.urls.publicApiUrl;
 

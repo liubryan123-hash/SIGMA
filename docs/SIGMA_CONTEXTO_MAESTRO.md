@@ -3,24 +3,34 @@
 **Sistema Integrado de Gestión y Marketing Académico**
 Desarrollado por LB Systems — Bryan
 
-**Última actualización:** 23 de marzo de 2026 — **v1.0.0 (RELEASE OFICIAL)** 🎉
+**Última actualización:** 14 de mayo de 2026 — **v1.0.0 en producción con HTTPS**
 
-**Estado VPS:** DESPLEGADO Y CORRIENDO ✅
+**Estado VPS:** DESPLEGADO Y CORRIENDO CON HTTPS ✅
 
-**Estado Producción:** LISTO PARA LANZAMIENTO PÚBLICO ✅
+**Estado Producción:** ACTIVO — Pendiente onboarding de clientes piloto
 
 **Clientes piloto:** Jireh, Círculo Matemático (pendiente onboarding)
 
-**Próximo hito:** V1.1 con feedback de clientes (abril 2026)
+**Próximo hito:** Test end-to-end OMR + onboarding primeros clientes (mayo 2026)
 
-**Características únicas implementadas hoy:**
+**URLs de producción verificadas (13/05/2026):**
 
-- ✅ **Bandeja de Exámenes Pendientes** - Cuando falla la validación, no se pierden datos
-- ✅ **Gestión completa de perfiles** - SuperAdmin puede cambiar roles y eliminar usuarios
-- ✅ **OMR con tabla editable tipo casilleros** - Corrección manual rápida
-- ✅ **Dashboard ejecutivo Director** - Gráficos de ingresos y rendimiento
-- ✅ **Simulador de ingreso Alumno** - Carreras objetivo con barra de progreso
-- ✅ **Gamificación** - Rachas de login, badges, ranking del salón
+| Servicio | URL | Estado |
+|---|---|---|
+| Frontend SIGMA | `https://sigma.srv1415334.hstgr.cloud` | ✅ activo |
+| Backend API | `https://api.sigma.srv1415334.hstgr.cloud` | ✅ activo |
+| n8n | `https://n8n.srv1415334.hstgr.cloud` | ✅ activo |
+| NocoDB (Farmacia) | `https://db.srv1415334.hstgr.cloud` | ✅ activo |
+| OMR service | `http://187.77.217.145:5000` (interno) | ✅ Up 3+ semanas |
+
+**Características únicas implementadas:**
+
+- ✅ **OMR nativo con OpenCV** — microservicio Python propio, sin dependencia de n8n
+- ✅ **Bandeja de Exámenes Pendientes** — cuando falla la validación, no se pierden datos
+- ✅ **OMR con tabla editable tipo casilleros** — corrección manual rápida
+- ✅ **Dashboard ejecutivo Director** — gráficos de ingresos y rendimiento
+- ✅ **Simulador de ingreso Alumno** — carreras objetivo con barra de progreso
+- ✅ **Gamificación** — rachas de login, badges, ranking del salón
 
 ---
 
@@ -186,16 +196,19 @@ plataforma-saas-academias/
 
 ---
 
-## 4. ESTADO ACTUAL DEL VPS (22/03/2026)
+## 4. ESTADO ACTUAL DEL VPS (verificado 13/05/2026)
 
-| Componente              | Estado                                        |
-| ----------------------- | --------------------------------------------- |
-| PostgreSQL 16           | ✅ Corriendo, configurado para aceptar Docker |
-| nginx                   | ✅ Dado de baja (`systemctl disable nginx`)   |
-| Docker + Docker Compose | ✅ Instalado (v29.3 / v5.1)                   |
-| n8n                     | ✅ Corriendo en Docker puerto 5678            |
-| Backend Docker          | ✅ Corriendo en puerto 3000                   |
-| Frontend Docker         | ✅ Corriendo en puerto 3001                   |
+| Componente              | Estado                                                     |
+| ----------------------- | ---------------------------------------------------------- |
+| PostgreSQL 16           | ✅ Corriendo, configurado para aceptar Docker              |
+| nginx                   | ✅ Dado de baja (`systemctl disable nginx`)                |
+| Docker + Docker Compose | ✅ Instalado (v29.3 / v5.1)                                |
+| Traefik + Let's Encrypt | ✅ Activo — HTTPS automático en todos los servicios        |
+| n8n                     | ✅ Corriendo — `https://n8n.srv1415334.hstgr.cloud`        |
+| Backend Docker          | ✅ Corriendo — `https://api.sigma.srv1415334.hstgr.cloud`  |
+| Frontend Docker         | ✅ Corriendo — `https://sigma.srv1415334.hstgr.cloud`      |
+| omr_service Docker      | ✅ Corriendo — puerto 5000 interno (Up 3+ semanas)         |
+| NocoDB (Farmacia)       | ✅ Corriendo — `https://db.srv1415334.hstgr.cloud`         |
 
 ### Archivos que faltaban en el VPS y se crearon/copiaron (21-22/03/2026)
 
@@ -243,6 +256,7 @@ docker compose logs -f
 | ------------ | --------------------------------------------------------- | ---------------------------------- |
 | `0 2 * * *`  | `/opt/edusaas/backup.sh` — pg_dump, guarda 14 días        | `/opt/edusaas/backups/backup.log`  |
 | `0 23 * * 0` | `node src/jobs/resumenSemanal.js` — resúmenes dominicales | `/opt/edusaas/backups/resumen.log` |
+| `0 3 * * *`  | `node src/jobs/cleanupPdfs.js` — borra PDFs y scans +30 días | `/opt/edusaas/backups/cleanup.log` |
 
 `/opt/edusaas/deploy.sh` — script de deploy manual/programable, loguea timestamp + resultado.
 
@@ -265,11 +279,13 @@ docker compose logs -f
 ssh -L 5433:127.0.0.1:5432 root@187.77.217.145 -N
 
 # Terminal 2 — Backend
-npm start   # desde e:\Antigravity proyectos\plataforma-saas-academias\
+npm start   # desde c:\Users\USUARIO\Proyectos\SIGMA\
 
 # Terminal 3 — Frontend
-npm run dev  # desde e:\Antigravity proyectos\plataforma-saas-academias\frontend\
+npm run dev  # desde c:\Users\USUARIO\Proyectos\SIGMA\frontend\
 ```
+
+> **Nota migración:** El proyecto se migró de `e:\Antigravity proyectos\plataforma-saas-academias\` a `c:\Users\USUARIO\Proyectos\SIGMA\`. Docker Desktop no está instalado en local — todo corre en VPS. Para el OMR en local: conectar vía túnel SSH y llamar al servicio en VPS.
 
 ---
 
@@ -293,9 +309,62 @@ npm run dev  # desde e:\Antigravity proyectos\plataforma-saas-academias\frontend
 
 ---
 
-## 6. SISTEMA OMR NATIVO — COLA ANTI-COLAPSO (Actualizado 25/03/2026)
+## 6. SISTEMA OMR NATIVO — COLA ANTI-COLAPSO (Actualizado 13/05/2026)
 
-Se reemplazó la dependencia externa de n8n por un **Microservicio Nativo en Python (FastAPI + OpenCV)** y un diseño de **Hoja OMR Horizontal de 100 preguntas**. 
+Se reemplazó la dependencia externa de n8n por un **Microservicio Nativo en Python (FastAPI + OpenCV)** y un diseño de **Hoja OMR Horizontal de 100 preguntas**.
+
+### Estado actual del OMR (13/05/2026)
+
+- ✅ `sigma-omr_service-1` corriendo en VPS (Up 3+ semanas, puerto 5000 interno)
+- ✅ Health check respondiendo: `{"status":"ok","service":"OMR Service"}`
+- ⚠️ **Hoja OMR aún no probada con impresión real** — pendiente test end-to-end
+- 🔄 **Rediseño visual de la hoja en curso** — decisiones tomadas el 13/05/2026 (ver abajo)
+
+### Formato definitivo de la hoja OMR — Decisiones 13/05/2026
+
+Después de análisis y diseño, el formato quedó definido como **único y fijo**. No hay variantes configurables.
+
+| Parámetro | Decisión | Razón |
+| --- | --- | --- |
+| Preguntas | Siempre 100, fijas | Si el examen tiene menos, el calificador ignora las no usadas |
+| Opciones | Siempre A–E (5), fijas | Si el examen usa 4, se configura en el módulo calificador |
+| Marcadores de esquina | Círculos negros rellenos (~9mm radio) | Más robustos que cuadrados ante fotos con ángulo/perspectiva |
+| Código alumno | 8 dígitos (DNI peruano) | Grilla 8 columnas × 10 filas (0–9) |
+| Logo academia | Opción C: logo si existe, nombre en texto si no | Profesional y flexible para todas las academias |
+| Formato de página | A4 horizontal (landscape), fijo | Estándar impresoras peruanas |
+
+### Cambios implementados ✅ (14/05/2026)
+
+**`omr_constants.py`:**
+- ✅ Radio marcadores de esquina: 6mm → **9mm** (más visibles para fotos de celular)
+
+**`template_generator.py` — rediseño completo:**
+- ✅ Paleta azul en cabeceras, etiquetas y separadores
+- ✅ Franja azul sólida de 4mm en tope del header
+- ✅ Barra azul de encabezados de columna con texto blanco ("1–25", "26–50", "51–75", "76–100")
+- ✅ Letras A–E dentro de cada burbuja en azul medio
+- ✅ Filas alternas con fondo azul pálido (en lugar de gris)
+- ✅ Borde exterior azul en grilla y header
+
+**`omr_engine.py`:**
+- ✅ Nueva función `_select_by_quadrant()` — 1 candidato por cuadrante, evita falsos positivos
+- ✅ Rango de área se ajusta automáticamente al nuevo `MARKER_R = 9mm`
+
+**Backend Node.js (14/05/2026):**
+- ✅ `GET /api/omr/template` — proxy autenticado que lee `nombre_academia` de BD y devuelve el PDF
+
+**Pendiente:**
+- [ ] `POST /api/admin/academias/:id/upload-logo` — endpoint de subida de logo con Multer
+- `logo_url` ya existe en `academias` y en el PUT de admin; solo falta el file-upload
+
+**Flujo logo completo (cuando se implemente):**
+```
+Director sube logo → public/uploads/logos/ → logo_url en BD
+                              ↓
+GET /api/omr/template → Node.js lee logo_url → envía al omr_service
+                              ↓
+              omr_service genera PDF con logo real (o nombre si no hay)
+```
 
 ### Arquitectura Anti-Colapso (Worker en Node.js)
 El sistema incluye un gestor interno de concurrencia que previene la saturación del servidor procesando las imágenes en segundo plano de manera autónoma:
@@ -322,6 +391,7 @@ Esta subida cae directamente en la categoría **"Pendientes de Alumnos"** dentro
 | `/api/omr/subir`                | POST    | Profesor sube imagen, entra a estado `en_cola` o provisional. |
 | `/api/exams/alumno/subir-revision`| POST  | Alumno sube hoja. Va a Bandeja Pendientes de Alumnos. |
 | `/api/omr/procesar/:id`         | POST    | Dispara y asigna la foto al Worker (Anti-Colapso).   |
+| `/api/omr/template`             | GET     | Descarga hoja OMR PDF personalizada con el nombre de la academia. |
 | `/api/exams/pendientes/:id/enviar-ia` | POST | Reenvía un pendiente directo a la cola principal del OMR. |
 | `http://omr_service:5000/api...`| POST    | (Interna) API Python de visión computacional pura.   |
 
@@ -557,39 +627,108 @@ try {
 
 ---
 
-## 11. PAQUETES Y PRECIOS SIGMA
+## 11. PAQUETES Y PRECIOS SIGMA (Actualizado 13/05/2026)
 
-### Plan Starter — S/180/mes
+> **Filosofía:** El motor OMR está en TODOS los planes. Los planes se diferencian por la profundidad del análisis, el acceso a funciones avanzadas y el límite de personal/alumnos. Precio único de implementación obligatorio en todos.
 
-- Precio de lanzamiento: S/150 el primer mes
-- Setup fee único: S/150
-- Límite: 80 alumnos, 200 escaneos OMR/mes
-- Incluye: gestión de alumnos, pagos, boletas PDF, asistencia, portal del alumno con historial de exámenes y progreso, CRM de prospectos básico, comunidad, whitelabel, soporte por tickets, calendario básico
-- No incluye: módulo tutor, portal de padres, analytics avanzado, fórmulas universitarias avanzadas, servicios de agencia
+### Setup Fee (pago único al contratar)
 
-### Plan Pro — S/320/mes
+- **Precio:** S/350 – S/500
+- Cubre: configuración inicial, logo, colores, capacitación del equipo y carga de plantillas de examen
+- Academias piloto (Jireh, Círculo Matemático): exoneradas del setup fee como condición de onboarding fundador
 
-- Precio de lanzamiento: S/280 el primer mes
-- Setup fee único: S/200
-- Límite: 300 alumnos, 500 escaneos OMR/mes
-- Incluye todo el Starter más: motor de cálculo con fórmulas universitarias (San Marcos, UNI, Agraria), desglose por curso y grupo, dashboard del director con proyección y alertas, auditoría anti-fraude, exportación a Excel, calendario académico completo, comunicados masivos, lista de espera, control de documentos, landing page automática de la academia
+### Plan Básico — S/250 – S/290/mes
 
-### Plan Academy — S/550/mes
+**Enfoque:** Digitalización y control operativo esencial.
 
-- Precio de lanzamiento: S/480 el primer mes
-- Setup fee único: S/300
-- Límite: ilimitado
-- Incluye todo el Pro más: módulo tutor activable, portal para padres, analytics avanzado con evolución por curso, simulacros con ranking interacademia, fórmulas de cálculo personalizadas avanzadas, soporte prioritario (<4h), acceso anticipado a nuevas funciones
+**Personal incluido:** 1 Director, 1 Secretaria, 1 Profesor (fijo)
+**Límite alumnos:** Hasta 100
 
-### Add-ons activables
+**Motor OMR:**
+- Calificación con fórmula genérica (puntos por correcta, incorrecta, blanco)
+- Límite de escaneos mensual (contador visible en dashboard del Director)
 
-| Add-on                              | Precio   |
-| ----------------------------------- | -------- |
-| Portal de padres (para Starter)     | S/50/mes |
-| WhatsApp Business integrado         | S/80/mes |
-| Módulo tutor (para Pro)             | S/50/mes |
-| Banco de preguntas universitarias   | S/90/mes |
-| Certificados digitales de simulacro | S/30/mes |
+**Reportes:** Notas totales únicamente
+
+**Funciones desbloqueadas:**
+- CRM de prospectos básico
+- Control de asistencia
+- Boletas PDF y gestión de pagos
+- Portal del alumno (historial de exámenes, gamificación básica)
+- Notificaciones básicas del sistema
+- Soporte por tickets
+
+**No incluye:** Fórmulas universitarias avanzadas, portal de padres, calendario, comunidad
+
+---
+
+### Plan Pro — S/490 – S/550/mes
+
+**Enfoque:** Fidelización, análisis estructurado y comunicación con padres.
+
+**Personal:** Escala según cantidad de alumnos
+**Límite alumnos:** Hasta 300
+
+**Motor OMR:**
+- Fórmulas universitarias exactas: UNMSM (5 áreas A–E), UNI, Agraria, PUCP
+- Límite de escaneos ampliado
+
+**Reportes:** Desglose por grupos de cursos (Matemática, Ciencias, Letras, etc.)
+
+**Funciones desbloqueadas (todo Básico más):**
+- Portal de Padres — sin comparaciones entre alumnos, páginas independientes por hijo, alertas inteligentes
+- Calendario académico y creación de eventos
+- Comunicados/notificaciones institucionales (sin comunidad aún)
+- Simulador de ingreso universitario
+- Gamificación con medallas y tokens
+
+**No incluye:** Comunidad, Biblioteca Digital, Mapa de Calor, análisis por curso específico
+
+---
+
+### Plan Ultimate — S/850 – S/990/mes
+
+**Enfoque:** Analítica profunda, comunidad activa y retención predictiva.
+
+**Personal:** Ilimitado
+**Límite alumnos:** Ilimitado
+
+**Motor OMR:**
+- Todo el motor Pro más detección de anomalías por pregunta (alerta si una pregunta tiene <5% de aciertos en el salón → posible error en la clave)
+- Escaneos ilimitados
+
+**Reportes:** Análisis por curso específico (Álgebra, Geometría, Química Orgánica, etc.)
+
+**Funciones desbloqueadas (todo Pro más):**
+- Comunidad interna de la academia
+- Biblioteca Digital de material didáctico
+- Mapa de Calor del salón
+- Centro de Retención anti-churn (alumnos con asistencia <60% + caída de notas en 2 simulacros consecutivos)
+- Módulo Tutor activable
+- Diplomas PDF automáticos al cierre de ciclo
+- Soporte prioritario (<4h)
+
+---
+
+### Servicios de Marketing LB Systems — ⏳ Coming Soon
+
+Disponible para todos los planes. En pausa por capacidad operativa.
+
+| Pack | Precio |
+| --- | --- |
+| Pack Presencia Digital | S/350/mes |
+| Pack Captación | S/500/mes |
+| Pack Automatización | S/400/mes |
+| Pack Completo Crecimiento | S/1,000/mes |
+| Landing page personalizada | S/500–800 (proyecto) |
+| Automatización a medida | S/600–1,200 (proyecto) |
+
+### Estrategia de Precio Ancla (para el pitch comercial)
+
+Mostrar la tabla con precios reales y ofrecer descuento de fundador a las primeras 3 academias:
+- Plan Pro a S/350/mes de por vida (en vez de S/490–550)
+- Exoneración del setup fee
+- Esto crea un cliente comprometido con costo de cambio alto ("si me voy pierdo mi precio especial")
 
 ### Servicios de agencia contratables desde el panel del director
 
@@ -681,44 +820,38 @@ Rubén y Camila: variable según proyectos activos, sin costo fijo hasta consoli
 
 ## 15. DEUDA TÉCNICA ACTIVA
 
-### Crítico (bloquea clientes)
+### Crítico (bloquea onboarding de clientes)
 
-- [x] ~~**Frontend Docker:** Build falla por caché~~ — resuelto el 21/03/2026
-- [x] ~~**Backend Docker:** Pendiente de levantar~~ — corriendo en puerto 3000
-- [x] ~~**Backup automático**~~ — `/opt/edusaas/backup.sh` + cron `0 2 * * *`, guarda 14 días
-- [x] ~~**Auditoría de permisos**~~ — corregidos 5 bugs cross-tenant en `academic.js` y `alumnos.js` el 22/03/2026
-- [x] ~~**Rate limiting**~~ — `express-rate-limit` activo: 200 req/min general, 10 intentos/15min en login
-- [x] ~~**Enforcement de permisos**~~ — implementado el 23/03/2026 (sidebar filtra por permisos configurados)
-- [x] ~~**Todos los roles en panel SuperAdmin**~~ — agregados tutor, padre, soporte_comercial, marketing_academia el 23/03/2026
-- [ ] **Retry/timeout n8n:** Máx 3 concurrentes, retry x2 con 5s de delay, timeout 30s por imagen (NO BLOQUEA - se puede hacer en V1.1)
+- [ ] **Test end-to-end del OMR** — nunca se ha probado con una hoja impresa real. Antes del onboarding hay que imprimir la hoja, fotografiarla y confirmar que el motor detecta correctamente.
+- [x] **Rediseño visual de la hoja OMR** ✅ 14/05/2026 — `omr_constants.py` (9mm), `template_generator.py` (azul), `omr_engine.py` (quadrant selection)
+- [x] **Endpoint proxy template OMR** ✅ 14/05/2026 — `GET /api/omr/template` en Node.js lee academia de BD y devuelve PDF
+- [x] **Seguridad `app.py`** ✅ 14/05/2026 — validación de extensión + límite 20 MB
+- [x] **Limpieza automática de PDFs** ✅ 14/05/2026 — `src/jobs/cleanupPdfs.js` (PDFs y scans +30 días)
+- [ ] **Endpoint upload de logo de academia** — `POST /api/admin/academias/:id/upload-logo`. El campo `logo_url` ya existe en BD y en el PUT, solo falta el endpoint de file upload con Multer.
 
-### Alto (importante pero no bloquea lanzamiento)
+### Alto (importante pero no bloquea)
 
-- [ ] **Refactor de `dashboard/page.js`** — ~1000 líneas (reducido de 1200), difícil de mantener. **NO BLOQUEA.**
-- [x] ~~**Botón de boleta en Secretaría**~~ — existe en `GestionPagos.jsx`, selector de alumno corregido
-- [x] ~~**Cron resumenSemanal en VPS**~~ — ejecutado 22/03/2026
-- [x] ~~**Dashboard ejecutivo Director**~~ — implementado con gráficos de ingresos y rendimiento por salón
-- [x] ~~**Home operativo Secretaria**~~ — implementado con tarjetas de deudores, vencimientos, lista espera, caja
-- [x] ~~**Vista de riesgo Profesor**~~ — implementada con semáforo de asistencia/notas
-- [x] ~~**Simulador de ingreso Alumno**~~ — implementado con carreras objetivo y barra de progreso
-- [x] ~~**Gamificación (rachas + badges)**~~ — implementado, tablas creadas, endpoints listos
-- [x] ~~**OMR con tabla editable**~~ — implementada corrección manual tipo casilleros
-- [x] ~~**Ciclos con preparación/turno**~~ — implementado (San Marcos, Repaso, Mañana, etc.)
-- [ ] **Validación de input** — falta sanitización en algunos endpoints (mejora continua, NO BLOQUEA)
-- [ ] **Retry/timeout n8n** — pendiente configurar en workflow de n8n (V1.1)
+- [x] ~~**Frontend Docker:** Build falla por caché~~ — resuelto 21/03/2026
+- [x] ~~**Backend Docker:** Pendiente de levantar~~ — corriendo con HTTPS
+- [x] ~~**Backup automático**~~ — `/opt/edusaas/backup.sh` + cron `0 2 * * *`, 14 días
+- [x] ~~**Auditoría de permisos**~~ — 5 bugs cross-tenant corregidos 22/03/2026
+- [x] ~~**Rate limiting**~~ — `express-rate-limit` activo
+- [x] ~~**Enforcement de permisos**~~ — implementado 23/03/2026
+- [ ] **Refactor de `dashboard/page.js`** — ~1000 líneas, difícil de mantener. NO BLOQUEA.
+- [ ] **Validación de input** — sanitización pendiente en algunos endpoints. NO BLOQUEA.
+- [ ] **Retry/timeout OMR worker** — máx 3 concurrentes, retry x2, timeout 30s. Para V1.1.
 
-### Pendiente FASE 10 (limpieza VPS - NO URGENTE)
+### Pendiente limpieza VPS (no urgente)
 
 - [ ] Identificar y eliminar carpeta del proyecto viejo en `/var/www/`
 - [ ] Revisar y eliminar workflows viejos de n8n
 - [ ] Cerrar puerto 5432 en firewall del VPS
-- [ ] Verificar si los datos del proyecto viejo (ACAD-JIREH demo) están en la BD actual
+- [ ] Verificar si hay datos demo del proyecto viejo en la BD actual
 
 ### Mejoras estéticas (post-lanzamiento)
 
 - [ ] Pulir colores y espaciados en algunos componentes
 - [ ] Animaciones de transición más suaves
-- [ ] Iconos personalizados para cada sección
 - [ ] Modo oscuro/claro consistente en toda la app
 
 ---
@@ -751,13 +884,16 @@ Rubén y Camila: variable según proyectos activos, sin costo fijo hasta consoli
 3. Iterar rápido en base a lo que digan los clientes
 4. Escalar a más academias (mes 2-3)
 
-### Esta semana — V0 (crítico para cerrar Jireh y Círculo Matemático)
+### Mayo 2026 — Pre-onboarding (crítico antes de Jireh y Círculo Matemático)
 
-1. ✅ Resolver build del frontend con `--no-cache`
-2. ✅ Levantar los contenedores en el VPS
-3. [ ] Configurar retry/timeout en n8n (V1.1, NO BLOQUEA)
-4. ✅ Auditar permisos en todos los endpoints — 5 bugs cross-tenant corregidos
-5. ✅ Verificar flujo completo del OMR de dos colas
+1. ✅ VPS corriendo con HTTPS (Traefik + Let's Encrypt)
+2. ✅ OMR service activo (3+ semanas de uptime)
+3. [x] **Rediseño visual hoja OMR** ✅ — `template_generator.py` (azul), `omr_constants.py` (9mm), `omr_engine.py` (quadrant)
+4. [x] **Proxy template + seguridad OMR** ✅ — `GET /api/omr/template`, validación extensión/tamaño, cleanup PDFs
+5. [ ] **Endpoint upload logo** — `POST /api/admin/academias/:id/upload-logo`
+6. [ ] **Test end-to-end** — imprimir hoja, fotografiar, procesar, confirmar resultado
+6. [ ] Onboarding Academia Jireh
+7. [ ] Onboarding Círculo Matemático
 
 ### Mes 2 — V1.1 (retención y mejoras)
 
@@ -1311,6 +1447,16 @@ Script Node.js standalone. Para cada alumno activo calcula:
 
 ---
 
+### Limpieza de archivos temporales — `src/jobs/cleanupPdfs.js`
+
+Elimina PDFs de boletas/resultados en `public/pdfs/` y fotos de scan en `public/uploads/scan-*` que superen los 30 días. Previene que el disco del VPS se llene silenciosamente.
+
+**Cron:** `0 3 * * * cd /opt/edusaas && node src/jobs/cleanupPdfs.js >> /opt/edusaas/backups/cleanup.log 2>&1`
+
+**Uso manual:** `node src/jobs/cleanupPdfs.js`
+
+---
+
 ## 21. CONSIDERACIONES DE IMPLEMENTACIÓN (REGLAS INNEGOCIABLES)
 
 1. **Separar siempre entornos de desarrollo y producción** antes de tener clientes pagando. Un error en producción con academias activas tiene consecuencias reales.
@@ -1325,7 +1471,188 @@ Script Node.js standalone. Para cada alumno activo calcula:
 
 ---
 
+---
+
+## 22. PORTAL DE PADRES — ESPECIFICACIÓN COMPLETA
+
+### Filosofía de diseño (innegociable)
+
+- **Cero comparaciones entre alumnos.** El padre nunca ve rankings ni tablas comparativas con otros estudiantes. Solo ve a su(s) hijo(s).
+- **Páginas independientes por hijo.** Si un padre tiene dos hijos en la academia, hay un selector en la cabecera ("Viendo: Luis" / "Viendo: Ana"). Al cambiar, la vista se recarga completamente. Los datos nunca se mezclan.
+- **Datos ocultos en la vista padre:** El componente `ranking` visible en el PortalAlumno debe estar estrictamente deshabilitado en la vista del padre.
+- **Gráficos de progreso individual:** Solo se compara el historial del alumno consigo mismo y con el puntaje mínimo requerido para la carrera que eligió.
+
+### Alertas automáticas al padre
+
+Disparadas desde el backend en el momento del registro de asistencia o al procesar resultados OMR:
+
+| Disparador | Condición | Tipo alerta |
+| --- | --- | --- |
+| Faltas seguidas | 2 o más `ausente` consecutivos | ⚠️ Alerta temprana |
+| Tardanzas acumuladas | 3 `tardanza` seguidos | ⚠️ Alerta temprana |
+| Caída de rendimiento | Promedio bajó >15% vs semana anterior | 📉 Alerta de seguimiento |
+| Subida de rendimiento | Promedio subió >15% vs semana anterior | 🎉 Felicitación |
+
+### Vista del padre por sección
+
+- **Rendimiento:** Gráfica `AreaChart` (Recharts) del puntaje en el tiempo vs. puntaje mínimo de la carrera objetivo
+- **Asistencia:** Porcentaje del mes actual, últimas 4 semanas
+- **Finanzas:** Deuda pendiente + historial de boletas descargables
+- **Próximos eventos:** Calendario con simulacros y fechas de pago
+- **Alertas recientes:** Feed de notificaciones del hijo (no comparativas)
+
+### Vinculación técnica
+
+La tabla `usuarios` ya soporta el rol `padre`. La vinculación padre-alumno requiere una tabla `padre_alumno` (pendiente migración):
+
+```sql
+CREATE TABLE padre_alumno (
+    id_padre    VARCHAR(50) REFERENCES usuarios(id_usuario),
+    id_alumno   VARCHAR(50) REFERENCES usuarios(id_usuario),
+    id_academia VARCHAR(50) NOT NULL,
+    PRIMARY KEY (id_padre, id_alumno)
+);
+```
+
+La Secretaria crea esta vinculación al matricular al alumno o desde el panel de gestión.
+
+---
+
+## 23. GAMIFICACIÓN v2 — MEDALLAS, TOKENS Y DIPLOMAS
+
+### Medallas globales (creadas por Bryan, luego personalizables por academia)
+
+Primera fase: Bryan diseña un set estándar usando los recursos de LB Systems.
+
+| Medalla | Condición de obtención |
+| --- | --- |
+| 🕐 El Reloj Suizo | 100% asistencia en el mes, sin tardanzas |
+| 📈 El Escalador | Mayor subida de puntaje vs. mes anterior (progreso propio) |
+| 🔥 El Imparable | Racha de login más larga del mes |
+| 🎯 El Enfocado | 5 simulacros completados en el ciclo |
+| 🧠 El Constante | Asistencia ≥90% durante todo el ciclo |
+| ⭐ Alumno del Mes | Mejor combinación asistencia + rendimiento (elegido por el sistema) |
+| 👨‍🏫 Profe del Mes | Elegido manualmente por el Director |
+
+Segunda fase (futuro): cada academia puede crear medallas propias desde su panel.
+
+### Sistema de Tokens (puntos canjeables)
+
+| Acción | Tokens ganados |
+| --- | --- |
+| Asistir toda la semana | +50 pts |
+| Dar el simulacro (solo por asistir) | +20 pts |
+| Aprobar el simulacro | +30 pts extra |
+| Login 7 días seguidos | +25 pts |
+| Obtener una medalla | +100 pts |
+
+La academia configura qué se puede canjear y por cuántos tokens (descuento en pensión, producto físico, etc.).
+
+### Diplomas PDF automáticos
+
+Al cierre de ciclo, el Director hace un solo clic y el sistema genera diplomas usando `pdfGenerator.js` para:
+- El alumno con más puntaje del salón
+- El alumno con mejor asistencia
+- El alumno con mayor progreso (subida de puntaje entre primer y último simulacro)
+- Todos los alumnos con 90%+ de asistencia
+
+### Resumen mensual compartible ("Spotify Wrapped" estudiantil)
+
+El cron `resumenSemanal.js` ya tiene los datos. A fin de mes, generar una vista visual del alumno:
+- Puntaje máximo alcanzado ese mes
+- Número de simulacros completados
+- Horas de racha acumuladas
+- Medallas obtenidas
+
+El alumno puede compartir esta tarjeta a sus redes sociales → marketing orgánico para la academia.
+
+---
+
+## 24. ANÁLISIS DE COMPETENCIA
+
+### Competidores directos en calificación OMR
+
+| Competidor | Precio | Ventaja | Debilidad vs SIGMA |
+| --- | --- | --- | --- |
+| **ZipGrade** | ~$15/año | Barato, fácil de usar | Solo califica. Sin fórmulas peruanas, sin portal, sin CRM |
+| **Remark Office OMR** | $1,000+ (licencia única) | Alta precisión | Software de escritorio, no cloud, sin interacción alumno |
+| **Google Forms + Sheets** | Gratis | Sin costo | Manual, sin OMR físico, sin gamificación, sin reportes automáticos |
+
+### Competidores de gestión escolar (ERPs)
+
+| Competidor | Precio aprox. | Enfoque | Debilidad vs SIGMA |
+| --- | --- | --- | --- |
+| **SieWeb** | S/3–8/alumno/mes | Colegios K-12 | No entiende simulacros tipo admisión, sin OMR nativo, sin fórmulas UNMSM/UNI |
+| **Cubicol** | Variable | Gestión general | Genérico, no especializado en preuniversitarios peruanos |
+| **Idukay** | Variable | Plataforma educativa | Enfocado en contenido digital, no en calificación física |
+
+### La ventaja injusta de SIGMA
+
+Nadie en el mercado peruano tiene estas tres cosas juntas:
+1. OMR físico con las fórmulas exactas de UNMSM, UNI y Agraria
+2. Portal del alumno con simulador de ingreso por carrera
+3. CRM de cobranza + gamificación + alertas predictivas
+
+Todo en una sola plataforma, a un precio por academia (no por alumno), sin instalar nada.
+
+---
+
+## 25. BACKLOG DE MEJORAS ESTRATÉGICAS
+
+Ideas validadas en sesión de planteamiento (13/05/2026). Ordenadas por impacto/esfuerzo:
+
+### Alta prioridad (impacto inmediato en onboarding)
+
+- **Onboarding del alumno "estilo Duolingo":** Primera vez que el alumno entra, pantalla de 3 pasos: ¿A qué universidad apuntas? → ¿Qué carrera? → barra de progreso activada. Alimenta el Simulador de Ingreso sin intervención de la secretaria.
+- **Empty States amigables:** Cuando no hay alumnos o exámenes, mostrar diseño visual con CTA claro ("Sube tu primera plantilla aquí"). Evita que los directores nuevos se confundan con tablas vacías.
+- **Bandeja OMR keyboard-first:** Navegación por teclado (↑↓ Enter) para procesar pendientes rápidamente. Filosofía "Inbox Zero" — limpiar la bandeja debe ser adictivo.
+
+### Media prioridad (V1.1)
+
+- **Detección de anomalías en plantilla:** Si una pregunta tiene <5% de aciertos en todo el salón, alerta visual al profesor: "La pregunta 42 tiene nivel de error inusual. ¿Revisar clave?"
+- **Recomendaciones "estilo Netflix":** El OMR ya sabe en qué falla el alumno. Si sacó bajo en Álgebra, el portal le sugiere automáticamente el material didáctico de ese curso. Requiere vincular temas del material con preguntas de la plantilla.
+- **Centro de Retención anti-churn:** Card roja en el Dashboard del Director: "X alumnos en riesgo de abandono" (asistencia <60% + caída de notas en 2 simulacros). Dato accionable, no solo informativo.
+
+### Baja prioridad (V1.2+)
+
+- **WhatsApp 1-click para secretaria:** Botón al lado de cada deudor que abre WhatsApp con mensaje pre-llenado. Requiere presupuesto para API oficial de Meta — pendiente crecimiento de ingresos.
+- **Resumen mensual compartible:** Tarjeta visual tipo "Spotify Wrapped" que el alumno puede publicar en redes. Marketing orgánico para la academia.
+- **Diplomas PDF automáticos al cierre de ciclo:** Ya tenemos `pdfGenerator.js`, solo falta el template y el trigger.
+- **Calendario individual por usuario:** Cada alumno con su propia agenda de asesorías/tutorías (V1.2).
+
+---
+
+## 26. CAPACIDAD DEL VPS Y PLAN DE ESCALABILIDAD
+
+### Estado actual (KVM2 Hostinger, ~2 vCPUs / 8GB RAM)
+
+| Servicio | Consumo estimado | Notas |
+| --- | --- | --- |
+| PostgreSQL 16 | Medio-alto | En el host, fuera de Docker |
+| Backend Node.js | Bajo-medio | Express.js es eficiente |
+| Frontend Next.js | Medio | Build estático servido por container |
+| omr_service Python | Alto en picos | Limitado a 3 concurrentes por el worker |
+| n8n | Medio | Solo para automatizaciones internas |
+| NocoDB | Bajo | Solo panel admin Farmacia |
+
+**Conclusión para V1.0:** El VPS soporta sin problema hasta 3 academias piloto. La cola anti-colapso del OMR (máx. 3 concurrentes) es el blindaje clave contra saturación de CPU.
+
+### Plan de escalabilidad por etapas
+
+| Etapa | Trigger | Acción |
+| --- | --- | --- |
+| **V1.0** (ahora) | 1–3 academias | VPS KVM2 actual. Monitorear con `docker stats` en horas pico |
+| **V1.2** (5–10 academias) | RAM >70% sostenida | Migrar PostgreSQL a instancia administrada externa (Supabase o RDS) |
+| **V2.0** (10+ academias) | CPU picos en OMR | omr_service a servidor dedicado con CPU optimizada |
+| **V3.0** (50+ academias) | Latencia frontend | CDN + separar frontend a Vercel o Cloudflare Pages |
+
+**Regla:** No mejorar el servidor antes de que el tráfico real lo exija. Los ingresos de las primeras academias financian la siguiente capa de infraestructura.
+
+---
+
 _Documento generado: 21 de marzo de 2026_
-_Última actualización: 22 de marzo de 2026 — Sprint V1.1 completo: OnboardingWizard, BuscadorGlobal, MapaCalorSalon, ControlDocumentos, ListaEspera, ComunicadosMasivos, landing pública, modo degradado OMR, resumen semanal automático, ranking alumno, notas privadas, backup nocturno, migraciones 002–006_
-_Estado del proyecto: v0.9.8 Beta corriendo en http://187.77.217.145:3001_
-_Pendiente: cron resumenSemanal en VPS, rate limiting, retry/timeout n8n, refactor page.js, limpieza VPS (FASE 10)_
+_Actualización 22/03/2026 — Sprint V1.1 completo_
+_Actualización 13/05/2026 — VPS con HTTPS activo, migración de máquina, omr_service verificado, decisiones de diseño hoja OMR, planes de precios redefinidos, especificación portal de padres, gamificación v2, análisis de competencia, backlog estratégico_
+_Actualización 14/05/2026 — Rediseño visual hoja OMR completo (azul, marcadores 9mm, quadrant detection), proxy GET /api/omr/template, seguridad app.py (extensión + 20MB), cleanupPdfs.js_
+_Estado del proyecto: v1.0.0 en producción — https://sigma.srv1415334.hstgr.cloud_
+_Pendiente crítico: endpoint upload-logo, test end-to-end OMR (imprimir + fotografiar), onboarding Jireh y Círculo Matemático_

@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    volumes:
+      - uploads_data:/app/public/uploads
+    networks:
+      - sigma_net
+      - edusaas_default
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.sigma-backend.rule=Host(`api.sigma.srv1415334.hstgr.cloud`)"
+      - "traefik.http.routers.sigma-backend.entrypoints=https"
+      - "traefik.http.routers.sigma-backend.tls=true"
+      - "traefik.http.routers.sigma-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sigma-backend.loadbalancer.server.port=3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://api.sigma.srv1415334.hstgr.cloud
+        NEXT_PUBLIC_FRONTEND_URL: https://sigma.srv1415334.hstgr.cloud
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+    networks:
+      - sigma_net
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.sigma-frontend.rule=Host(`sigma.srv1415334.hstgr.cloud`)"
+      - "traefik.http.routers.sigma-frontend.entrypoints=https"
+      - "traefik.http.routers.sigma-frontend.tls=true"
+      - "traefik.http.routers.sigma-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sigma-frontend.loadbalancer.server.port=3001"
+
+  omr_service:
+    build:
+      context: ./omr_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    networks:
+      - sigma_net
+
+volumes:
+  uploads_data:
+    name: sigma_uploads_data
+    external: true
+
+networks:
+  sigma_net:
+    driver: bridge
+  edusaas_default:
+    external: true
+  coolify:
+    external: true
