@@ -729,16 +729,31 @@ router.get('/template', verificarRoles('superadmin', 'director', 'profesor'), as
 
   try {
     const { rows } = await pool.query(
-      'SELECT nombre_academia FROM academias WHERE id_academia = $1',
+      'SELECT nombre_academia, logo_url FROM academias WHERE id_academia = $1',
       [id_academia]
     );
     const academy_name = rows[0]?.nombre_academia || 'ACADEMIA';
+    const logo_url     = rows[0]?.logo_url || null;
 
     const OMR_BASE = (process.env.OMR_SERVICE_URL || 'http://omr_service:5000/api/omr/process')
       .replace(/\/api\/omr\/process$/, '');
 
-    const params = new URLSearchParams({ academy_name, exam_title, n_questions: String(n_questions) });
-    const resp = await fetch(`${OMR_BASE}/api/omr/template?${params}`);
+    const form = new FormData();
+    form.append('academy_name', academy_name);
+    form.append('exam_title',   exam_title);
+    form.append('n_questions',  String(n_questions));
+
+    if (logo_url) {
+      const logoPath = path.join(__dirname, '..', '..', 'public', logo_url);
+      if (fs.existsSync(logoPath)) {
+        const logoBuffer = fs.readFileSync(logoPath);
+        const ext  = path.extname(logoPath).toLowerCase();
+        const mime = ext === '.png' ? 'image/png' : 'image/jpeg';
+        form.append('logo', new Blob([logoBuffer], { type: mime }), path.basename(logoPath));
+      }
+    }
+
+    const resp = await fetch(`${OMR_BASE}/api/omr/template`, { method: 'POST', body: form });
 
     if (!resp.ok) {
       return res.status(502).json({ error: 'Error generando plantilla en el servicio OMR.' });

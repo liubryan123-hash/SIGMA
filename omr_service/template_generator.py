@@ -13,10 +13,12 @@ Uso:
 """
 
 import io
+import os
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape, A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
+from reportlab.lib.utils import ImageReader
 
 from omr_constants import (
     PAGE_H, PAGE_W,
@@ -48,6 +50,7 @@ def generate_template_pdf(
     academy_name: str = "ACADEMIA",
     exam_title: str = "HOJA DE RESPUESTAS",
     n_questions: int = N_QUESTIONS,
+    logo_path: str = None,
 ) -> bytes:
     """
     Genera el PDF de la ficha OMR estándar SIGMA.
@@ -56,6 +59,7 @@ def generate_template_pdf(
         academy_name: Nombre de la academia (aparece en cabecera derecha).
         exam_title:   Título del examen (aparece en cabecera derecha).
         n_questions:  Número de preguntas activas (1-100).
+        logo_path:    Ruta a la imagen del logo (PNG/JPG). Opcional.
 
     Returns:
         Bytes del PDF generado.
@@ -72,7 +76,7 @@ def generate_template_pdf(
     _draw_corner_markers(c, y)
     _draw_separator(c, y)
     _draw_info_panel(c, y)
-    _draw_logo_area(c, y, academy_name, exam_title)
+    _draw_logo_area(c, y, academy_name, exam_title, logo_path)
     _draw_answer_grid(c, y, n_questions)
 
     c.save()
@@ -201,7 +205,7 @@ def _draw_info_panel(c, y):
 # Panel derecho — Cabecera (logo + nombre academia)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _draw_logo_area(c, y, academy_name: str, exam_title: str):
+def _draw_logo_area(c, y, academy_name: str, exam_title: str, logo_path: str = None):
     panel_w  = (RIGHT_X2 - RIGHT_X1) * mm
     panel_h  = (LOGO_Y2 - LOGO_Y1) * mm
     stripe_h = 4.0   # mm — franja azul sólida en la parte superior
@@ -226,22 +230,39 @@ def _draw_logo_area(c, y, academy_name: str, exam_title: str):
     logo_box_y = LOGO_Y1 + stripe_h + 2   # borde superior de la caja (mm desde arriba)
     logo_box_w = 24.0
     logo_box_h = LOGO_Y2 - logo_box_y - 2
-    c.setFillColor(colors.Color(0.97, 0.97, 0.97))
-    c.setStrokeColor(BLUE_MID)
-    c.setLineWidth(0.5)
-    c.rect(
-        logo_box_x * mm,
-        y(logo_box_y + logo_box_h),
-        logo_box_w * mm, logo_box_h * mm,
-        fill=1, stroke=1,
-    )
-    c.setFont("Helvetica", 5)
-    c.setFillColor(BLUE_MID)
-    c.drawCentredString(
-        (logo_box_x + logo_box_w / 2) * mm,
-        y(logo_box_y + logo_box_h / 2) - 1.5,
-        "LOGO",
-    )
+
+    box_x_pt = logo_box_x * mm
+    box_y_pt = y(logo_box_y + logo_box_h)   # bottom-left en puntos ReportLab
+    box_w_pt = logo_box_w * mm
+    box_h_pt = logo_box_h * mm
+
+    logo_drawn = False
+    if logo_path and os.path.isfile(logo_path):
+        try:
+            img = ImageReader(logo_path)
+            iw, ih = img.getSize()
+            scale   = min(box_w_pt / iw, box_h_pt / ih)
+            draw_w  = iw * scale
+            draw_h  = ih * scale
+            draw_x  = box_x_pt + (box_w_pt - draw_w) / 2
+            draw_y  = box_y_pt + (box_h_pt - draw_h) / 2
+            c.drawImage(logo_path, draw_x, draw_y, draw_w, draw_h, mask='auto')
+            logo_drawn = True
+        except Exception:
+            pass
+
+    if not logo_drawn:
+        c.setFillColor(colors.Color(0.97, 0.97, 0.97))
+        c.setStrokeColor(BLUE_MID)
+        c.setLineWidth(0.5)
+        c.rect(box_x_pt, box_y_pt, box_w_pt, box_h_pt, fill=1, stroke=1)
+        c.setFont("Helvetica", 5)
+        c.setFillColor(BLUE_MID)
+        c.drawCentredString(
+            box_x_pt + box_w_pt / 2,
+            box_y_pt + box_h_pt / 2 - 1.5,
+            "LOGO",
+        )
 
     # Nombre de la academia
     text_x = (logo_box_x + logo_box_w + 3) * mm

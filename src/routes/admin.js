@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs');
 const { verificarToken, verificarSuperAdmin, verificarRoles } = require('../middleware/authMiddleware');
 const { registrarLog } = require('./audit');
 const { ensureFoundationSchema, seedAcademyModules } = require('../db/foundation');
@@ -172,6 +176,56 @@ router.delete('/academias/:id_academia', async (req, res) => {
     res.json({ mensaje: 'Academia desactivada.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// LOGO — subir/reemplazar logo de academia
+// ==========================================
+const LOGOS_DIR = path.join(__dirname, '..', '..', 'public', 'logos');
+const logoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, allowed.includes(ext));
+  },
+});
+
+router.post('/academias/:id_academia/logo', logoUpload.single('logo'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Archivo de imagen requerido (PNG, JPG, WEBP, max 2 MB).' });
+  }
+
+  const { id_academia } = req.params;
+
+  try {
+    fs.mkdirSync(LOGOS_DIR, { recursive: true });
+
+    const filename = `academia_${id_academia}.png`;
+    const filepath = path.join(LOGOS_DIR, filename);
+
+    // Normalizar a PNG, max 400×400, fondo blanco para JPEGs sin alpha
+    await sharp(req.file.buffer)
+      .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
+      .png({ compressionLevel: 7 })
+      .toFile(filepath);
+
+    const logo_url = `/logos/${filename}`;
+    const { rows } = await pool.query(
+      'UPDATE academias SET logo_url = $1 WHERE id_academia = $2 RETURNING id_academia, nombre_academia, logo_url',
+      [logo_url, id_academia]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Academia no encontrada.' });
+    }
+
+    await registrarLog(req.usuario.id_usuario, id_academia, 'LOGO_ACTUALIZADO', `Logo subido: ${filename}`, req.ip);
+    res.json({ mensaje: 'Logo actualizado.', logo_url, academia: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: `Error procesando logo: ${err.message}` });
   }
 });
 

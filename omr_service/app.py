@@ -92,28 +92,47 @@ async def process_exam(
             "error": f"Error interno en motor OMR: {str(e)}"
         })
 
-@app.get("/api/omr/template")
+@app.post("/api/omr/template")
 async def get_template(
-    academy_name: str = "ACADEMIA",
-    exam_title: str = "HOJA DE RESPUESTAS",
-    n_questions: int = 100,
+    academy_name: str = Form("ACADEMIA"),
+    exam_title:   str = Form("HOJA DE RESPUESTAS"),
+    n_questions:  int = Form(100),
+    logo: UploadFile = File(None),
 ):
     """
     Genera y descarga el PDF de la ficha estándar SIGMA OMR.
-    Parámetros opcionales (query string):
+    Campos de formulario (multipart/form-data):
         academy_name  — nombre de la academia
         exam_title    — título del examen
         n_questions   — número de preguntas activas (1-100)
+        logo          — imagen del logo (opcional, PNG/JPG)
     """
     if not (1 <= n_questions <= 100):
         raise HTTPException(status_code=400,
                             detail="n_questions debe estar entre 1 y 100")
 
-    pdf_bytes = generate_template_pdf(
-        academy_name=academy_name,
-        exam_title=exam_title,
-        n_questions=n_questions,
-    )
+    logo_tmp = None
+    try:
+        if logo and logo.filename:
+            logo_ext = os.path.splitext(logo.filename)[1].lower()
+            if logo_ext not in {'.png', '.jpg', '.jpeg', '.webp'}:
+                raise HTTPException(status_code=400, detail="Logo debe ser PNG, JPG o WEBP.")
+            logo_content = await logo.read()
+            if len(logo_content) > 2 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="Logo demasiado grande (max 2 MB).")
+            logo_tmp = os.path.join(UPLOAD_DIR, f"logo_{uuid.uuid4()}{logo_ext}")
+            with open(logo_tmp, "wb") as f:
+                f.write(logo_content)
+
+        pdf_bytes = generate_template_pdf(
+            academy_name=academy_name,
+            exam_title=exam_title,
+            n_questions=n_questions,
+            logo_path=logo_tmp,
+        )
+    finally:
+        if logo_tmp and os.path.exists(logo_tmp):
+            os.remove(logo_tmp)
 
     safe_name = academy_name.lower().replace(" ", "_")
     filename  = f"ficha_omr_{safe_name}.pdf"
