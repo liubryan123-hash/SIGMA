@@ -729,10 +729,10 @@ router.get('/template', verificarRoles('superadmin', 'director', 'profesor'), as
 
   try {
     const { rows } = await pool.query(
-      'SELECT nombre_academia, logo_url FROM academias WHERE id_academia = $1',
+      'SELECT nombre, logo_url FROM academias WHERE id_academia = $1',
       [id_academia]
     );
-    const academy_name = rows[0]?.nombre_academia || 'ACADEMIA';
+    const academy_name = rows[0]?.nombre || 'ACADEMIA';
     const logo_url     = rows[0]?.logo_url || null;
 
     const OMR_BASE = (process.env.OMR_SERVICE_URL || 'http://omr_service:5000/api/omr/process')

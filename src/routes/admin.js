@@ -214,7 +214,7 @@ router.post('/academias/:id_academia/logo', logoUpload.single('logo'), async (re
 
     const logo_url = `/logos/${filename}`;
     const { rows } = await pool.query(
-      'UPDATE academias SET logo_url = $1 WHERE id_academia = $2 RETURNING id_academia, nombre_academia, logo_url',
+      'UPDATE academias SET logo_url = $1 WHERE id_academia = $2 RETURNING id_academia, nombre, logo_url',
       [logo_url, id_academia]
     );
 
