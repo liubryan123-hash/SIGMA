@@ -17,15 +17,21 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=coolify"
+      # middlewares definidos inline (mismo provider docker)
+      - "traefik.http.middlewares.sigma-compress.compress=true"
+      - "traefik.http.middlewares.sigma-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sigma-redirect.redirectscheme.permanent=true"
+      # HTTPS
       - "traefik.http.routers.sigma-backend.rule=Host(`api.sigma.srv1415334.hstgr.cloud`)"
       - "traefik.http.routers.sigma-backend.entrypoints=https"
       - "traefik.http.routers.sigma-backend.tls=true"
       - "traefik.http.routers.sigma-backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.sigma-backend.middlewares=compress@file"
+      - "traefik.http.routers.sigma-backend.middlewares=sigma-compress"
       - "traefik.http.services.sigma-backend.loadbalancer.server.port=3000"
+      # HTTP -> HTTPS
       - "traefik.http.routers.sigma-backend-http.rule=Host(`api.sigma.srv1415334.hstgr.cloud`)"
       - "traefik.http.routers.sigma-backend-http.entrypoints=http"
-      - "traefik.http.routers.sigma-backend-http.middlewares=https-redirect@file"
+      - "traefik.http.routers.sigma-backend-http.middlewares=sigma-redirect"
 
   frontend:
     build:
@@ -44,15 +50,17 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=coolify"
+      # HTTPS
       - "traefik.http.routers.sigma-frontend.rule=Host(`sigma.srv1415334.hstgr.cloud`)"
       - "traefik.http.routers.sigma-frontend.entrypoints=https"
       - "traefik.http.routers.sigma-frontend.tls=true"
       - "traefik.http.routers.sigma-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.sigma-frontend.middlewares=compress@file"
+      - "traefik.http.routers.sigma-frontend.middlewares=sigma-compress"
       - "traefik.http.services.sigma-frontend.loadbalancer.server.port=3001"
+      # HTTP -> HTTPS
       - "traefik.http.routers.sigma-frontend-http.rule=Host(`sigma.srv1415334.hstgr.cloud`)"
       - "traefik.http.routers.sigma-frontend-http.entrypoints=http"
-      - "traefik.http.routers.sigma-frontend-http.middlewares=https-redirect@file"
+      - "traefik.http.routers.sigma-frontend-http.middlewares=sigma-redirect"
 
   omr_service:
     build:
