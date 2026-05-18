@@ -4,37 +4,67 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     env_file:
       - .env.production
     volumes:
       - uploads_data:/app/public/uploads
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.sigma-backend.rule=Host(`api.sigma.srv1415334.hstgr.cloud`)"
+      - "traefik.http.routers.sigma-backend.entrypoints=https"
+      - "traefik.http.routers.sigma-backend.tls=true"
+      - "traefik.http.routers.sigma-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sigma-backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.sigma-backend-http.rule=Host(`api.sigma.srv1415334.hstgr.cloud`)"
+      - "traefik.http.routers.sigma-backend-http.entrypoints=http"
+      - "traefik.http.routers.sigma-backend-http.middlewares=https-redirect"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://187.77.217.145:3000
-        NEXT_PUBLIC_FRONTEND_URL: http://187.77.217.145:3001
+        NEXT_PUBLIC_API_URL: https://api.sigma.srv1415334.hstgr.cloud
+        NEXT_PUBLIC_FRONTEND_URL: https://sigma.srv1415334.hstgr.cloud
     restart: unless-stopped
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     depends_on:
       - backend
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.sigma-frontend.rule=Host(`sigma.srv1415334.hstgr.cloud`)"
+      - "traefik.http.routers.sigma-frontend.entrypoints=https"
+      - "traefik.http.routers.sigma-frontend.tls=true"
+      - "traefik.http.routers.sigma-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sigma-frontend.loadbalancer.server.port=3001"
+      - "traefik.http.routers.sigma-frontend-http.rule=Host(`sigma.srv1415334.hstgr.cloud`)"
+      - "traefik.http.routers.sigma-frontend-http.entrypoints=http"
+      - "traefik.http.routers.sigma-frontend-http.middlewares=https-redirect"
 
   omr_service:
     build:
       context: ./omr_service
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
+    networks:
+      - coolify
+
+networks:
+  coolify:
+    external: true
 
 volumes:
   uploads_data:
