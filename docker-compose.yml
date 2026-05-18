@@ -21,11 +21,11 @@ services:
       - "traefik.http.routers.sigma-backend.entrypoints=https"
       - "traefik.http.routers.sigma-backend.tls=true"
       - "traefik.http.routers.sigma-backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.sigma-backend.middlewares=compress"
+      - "traefik.http.routers.sigma-backend.middlewares=compress@file"
       - "traefik.http.services.sigma-backend.loadbalancer.server.port=3000"
       - "traefik.http.routers.sigma-backend-http.rule=Host(`api.sigma.srv1415334.hstgr.cloud`)"
       - "traefik.http.routers.sigma-backend-http.entrypoints=http"
-      - "traefik.http.routers.sigma-backend-http.middlewares=https-redirect"
+      - "traefik.http.routers.sigma-backend-http.middlewares=https-redirect@file"
 
   frontend:
     build:
@@ -48,11 +48,11 @@ services:
       - "traefik.http.routers.sigma-frontend.entrypoints=https"
       - "traefik.http.routers.sigma-frontend.tls=true"
       - "traefik.http.routers.sigma-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.sigma-frontend.middlewares=compress"
+      - "traefik.http.routers.sigma-frontend.middlewares=compress@file"
       - "traefik.http.services.sigma-frontend.loadbalancer.server.port=3001"
       - "traefik.http.routers.sigma-frontend-http.rule=Host(`sigma.srv1415334.hstgr.cloud`)"
       - "traefik.http.routers.sigma-frontend-http.entrypoints=http"
-      - "traefik.http.routers.sigma-frontend-http.middlewares=https-redirect"
+      - "traefik.http.routers.sigma-frontend-http.middlewares=https-redirect@file"
 
   omr_service:
     build:
