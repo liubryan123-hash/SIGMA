@@ -14,6 +14,7 @@ const nextConfig = {
   
   // Configuración para producción
   output: 'standalone',
+  compress: true,
   
   // Proxy de API en desarrollo (útil para evitar CORS en local)
   async rewrites() {
